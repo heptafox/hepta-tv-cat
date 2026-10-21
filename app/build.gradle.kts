@@ -10,5 +10,7 @@ android {
         versionCode = 4
         versionName = "0.4"
     }
+    // ponytail: checked-in debug key so CI and local builds share one signature and update in place on the TV. Public key = anyone can build an updating APK; fine for a hobby overlay.
+    signingConfigs { getByName("debug") { storeFile = file("debug.keystore"); storePassword = "android"; keyAlias = "androiddebugkey"; keyPassword = "android" } }
     compileOptions { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
 }

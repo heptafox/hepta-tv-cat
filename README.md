@@ -104,7 +104,7 @@ The cat appears in the corner and starts counting. The **TV Cat** icon is in you
 - **Wireless debugging shows a pairing code (some Android 11+ TVs)**: run `adb pair <ip>:<pairing-port>` and enter the code, then `adb connect <ip>:<port>` using the port shown on the debugging screen, and use that address in the commands above.
 - **Cat does not show**: the overlay permission was not granted. Run the two `appops` commands again.
 - **Streak never resets / counts the home screen**: the usage-access permission is missing. Run the `GET_USAGE_STATS` command again.
-- **Update fails with a signature error**: uninstall first (`adb uninstall dev.hepta.tvcat`) and install again.
+- **Update fails with a signature error**: the TV has a build from before v0.4, when each release had its own key. Uninstall once (`adb uninstall dev.hepta.tvcat`) and install again; later updates install in place.
 
 To stop it: `adb shell am force-stop dev.hepta.tvcat`. To remove it: `adb uninstall dev.hepta.tvcat`.
 
