@@ -7,8 +7,8 @@ android {
         applicationId = "dev.hepta.tvcat"
         minSdk = 26
         targetSdk = 30 // ponytail: matches the TV (Android 11); bump only when the TV updates
-        versionCode = 3
-        versionName = "0.3"
+        versionCode = 4
+        versionName = "0.4"
     }
     compileOptions { sourceCompatibility = JavaVersion.VERSION_17; targetCompatibility = JavaVersion.VERSION_17 }
 }

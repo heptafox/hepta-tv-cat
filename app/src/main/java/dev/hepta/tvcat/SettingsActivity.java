@@ -10,6 +10,7 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
+import android.widget.ScrollView;
 import android.widget.SeekBar;
 import android.widget.Switch;
 import android.widget.TextView;
@@ -103,7 +104,10 @@ public class SettingsActivity extends Activity {
         }
         col.addView(pos, new LinearLayout.LayoutParams(dp(520), -2));
 
-        setContentView(col);
+        ScrollView scroll = new ScrollView(this); // ponytail: column outgrew 1080p once bedtime/weather rows landed; D-pad focus scrolls it
+        scroll.setBackgroundColor(0xFF2B2D42);
+        scroll.addView(col);
+        setContentView(scroll);
         enabled.requestFocus();
     }
 
