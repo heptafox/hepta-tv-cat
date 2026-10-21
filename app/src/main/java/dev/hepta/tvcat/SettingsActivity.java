@@ -19,7 +19,8 @@ public class SettingsActivity extends Activity {
     @Override protected void onCreate(Bundle b) {
         super.onCreate(b);
         SharedPreferences p = getSharedPreferences("cat", MODE_PRIVATE);
-        if (p.getBoolean("enabled", true)) startForegroundService(new Intent(this, CatService.class));
+        if (p.getBoolean("enabled", true)) startForegroundService(new Intent(this, CatService.class)
+                .putExtra("demo", getIntent().getBooleanExtra("demo", false))); // demo: see CatService.demo()
 
         LinearLayout col = new LinearLayout(this);
         col.setOrientation(LinearLayout.VERTICAL);

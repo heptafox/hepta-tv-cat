@@ -187,7 +187,20 @@ public class CatService extends Service {
 
     /** Show the bubble with a face; showMs 0 keeps it until the next hide. Honors quiet mode. */
     void say(String text, int face, long showMs) {
-        if (prefs.getBoolean("muted", false)) return;
+        if (!prefs.getBoolean("muted", false)) show(text, face, showMs);
+    }
+
+    /** Every pop-up once, 4 s apart: adb shell am start -n dev.hepta.tvcat/.SettingsActivity --ez demo true */
+    void demo() {
+        String st = time(System.currentTimeMillis()) + " · 2 h today · 1 h 30 m on YouTube · 14°C clear";
+        String[] t = {"Yay! 30 min streak!\n" + st, "Hmm. 1 h streak.\n" + st, "2 h streak. Still watching?!\n" + st, "3 h streak!!! GO OUTSIDE.\n" + st,
+                st, "It's " + time(System.currentTimeMillis()) + ". Bedtime!", HOME_NUDGE_MIN + " min on the home screen. Pick something!",
+                "Loud! My ears!", "No internet!", "YouTube: New video — Cats vs. cucumbers"};
+        int[] f = {FACES[0], FACES[1], FACES[2], FACES[3], FACES[0], R.drawable.cat_sleepy, R.drawable.cat_meh, R.drawable.cat_ears, R.drawable.cat_meh, R.drawable.cat};
+        for (int i = 0; i < t.length; i++) { final int k = i; h.postDelayed(() -> show(t[k], f[k], 3_500), i * 4_000L); }
+    }
+
+    void show(String text, int face, long showMs) {
         bubble.setText(text);
         bubble.setVisibility(View.VISIBLE);
         cat.setImageResource(face);
@@ -262,7 +275,10 @@ public class CatService extends Service {
                 .setContentTitle("TV Cat is watching with you").build();
     }
 
-    @Override public int onStartCommand(Intent i, int f, int id) { return START_STICKY; }
+    @Override public int onStartCommand(Intent i, int f, int id) {
+        if (i != null && i.getBooleanExtra("demo", false)) demo();
+        return START_STICKY;
+    }
     @Override public IBinder onBind(Intent i) { return null; }
     @Override public void onDestroy() {
         me = null;
