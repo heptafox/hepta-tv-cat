@@ -11,5 +11,6 @@ adb connect "$TV"   # first time: accept the "Allow USB debugging?" prompt on th
 adb -s "$TV" install -r "$APK"
 adb -s "$TV" shell appops set $PKG SYSTEM_ALERT_WINDOW allow   # draw the cat over other apps
 adb -s "$TV" shell appops set $PKG GET_USAGE_STATS allow       # detect the foreground app
+adb -s "$TV" shell cmd notification allow_listener $PKG/.NotifListener   # optional: show TV notifications in the bubble
 adb -s "$TV" shell am start -n $PKG/.SettingsActivity
 echo "Done. TV Cat is running."

@@ -7,6 +7,7 @@ public final class Streak {
 
     public int minutes;
     public int idleMinutes;
+    public int lateHours; // hours past bedtime (0 = not late); set by the service, bumps the mood
 
     /** @return true when a milestone (30 min, 1 h, ...) was just reached. */
     public boolean tick(boolean watching, long gapMs) {
@@ -20,12 +21,16 @@ public final class Streak {
         return minutes % MILESTONE_MIN == 0;
     }
 
-    /** 0 happy (<1 h), 1 unimpressed (<2 h), 2 angry (<3 h), 3 furious. */
-    public int mood() { return Math.min(3, minutes / 60); }
+    /** 0 happy (<1 h), 1 unimpressed (<2 h), 2 angry (<3 h), 3 furious. Each hour past bedtime adds one. */
+    public int mood() { return Math.min(3, minutes / 60 + lateHours); }
+
+    public static String fmt(int min) {
+        int h = min / 60, m = min % 60;
+        return h == 0 ? m + " min" : m == 0 ? h + " h" : h + " h " + m + " m";
+    }
 
     public String label() {
-        int h = minutes / 60, m = minutes % 60;
-        String t = h == 0 ? m + " min" : m == 0 ? h + " h" : h + " h " + m + " m";
+        String t = fmt(minutes);
         switch (mood()) {
             case 0: return "Yay! " + t + " streak!";
             case 1: return "Hmm. " + t + " streak.";
@@ -44,10 +49,14 @@ public final class Streak {
         assert !s.tick(false, 60_000) && s.minutes == 0 : "long idle resets";
         for (int i = 0; i < 90; i++) s.tick(true, 60_000);
         assert s.mood() == 1 && s.label().equals("Hmm. 1 h 30 m streak.") : s.label();
+        s.lateHours = 2;
+        assert s.mood() == 3 : "bedtime bumps mood";
+        s.lateHours = 0;
         for (int i = 0; i < 90; i++) s.tick(true, 60_000);
         assert s.mood() == 3 && s.label().startsWith("3 h streak!!!") : s.label();
         s.tick(true, 3_600_000);
         assert s.minutes == 1 : "sleep gap resets";
+        assert fmt(0).equals("0 min") && fmt(120).equals("2 h") && fmt(61).equals("1 h 1 m");
         System.out.println("Streak ok");
     }
 }

@@ -12,7 +12,13 @@ A tiny cat that sits in the corner of your Android TV and pops out a speech bubb
 - **Idle** = screen off or sitting on the home screen. 10 idle minutes (or TV standby) resets the streak.
 - The streak survives restarts (saved every minute).
 - The cat's face depends on the streak: happy under 1 h, unimpressed at 1 h, angry at 2 h, furious from 3 h.
-- Settings (click the app icon): show/hide cat, quiet mode (no pop-ups), cat size, transparency, corner position.
+- Every pop-up also shows the time, today's total, and time spent in the current app ("22:00 · 2 h today · 1 h 30 m on YouTube").
+- Hourly chime: the cat pops the same status line at the top of every hour.
+- Bedtime (optional): the cat yawns at the set hour and gets one mood grumpier for every hour past it.
+- Nudges: 5 minutes on the home screen, volume above 80 % (50 % past bedtime), and a sticky "No internet!" while offline.
+- Weather (opt-in): current temperature and sky in the bubble. Uses your public IP for location via geojs.io and open-meteo.com; off by default.
+- TV notifications in the bubble (optional): needs one extra adb command, see step 7.
+- Settings (click the app icon): show/hide cat, quiet mode (no pop-ups), weather, bedtime, cat size, transparency, corner position.
 
 ## Install (no Android Studio, no SDK)
 
@@ -78,6 +84,7 @@ adb connect 192.168.0.105:5555
 adb install -r hepta-tv-cat.apk
 adb shell appops set dev.hepta.tvcat SYSTEM_ALERT_WINDOW allow   # draw the cat over other apps
 adb shell appops set dev.hepta.tvcat GET_USAGE_STATS allow       # detect the foreground app
+adb shell cmd notification allow_listener dev.hepta.tvcat/.NotifListener   # optional: TV notifications in the bubble
 adb shell am start -n dev.hepta.tvcat/.SettingsActivity
 ```
 
@@ -117,7 +124,7 @@ Pushing a tag like `v0.1` makes GitHub Actions build the APK and attach it to a 
 ## Tuning
 
 `Streak.java`: `MILESTONE_MIN` (30) and `IDLE_RESET_MIN` (10).
-`CatService.java`: `SHOW_MS` (bubble on-screen time), `MIN_DP`/`MAX_DP` size range, `MAX_FADE` transparency cap.
+`CatService.java`: `SHOW_MS` (bubble on-screen time), `MIN_DP`/`MAX_DP` size range, `MAX_FADE` transparency cap, `LOUD_PCT`/`LOUD_LATE_PCT` volume warning, `HOME_NUDGE_MIN`, `BED_HOURS` choices.
 Faces live in `res/drawable/face_*.xml`, layered over `cat_body.xml`.
 
 ## Contributing

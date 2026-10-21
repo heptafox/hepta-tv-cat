@@ -36,7 +36,7 @@ public class SettingsActivity extends Activity {
 
         int m = p.getInt("min", 0);
         TextView streak = new TextView(this);
-        streak.setText(m == 0 ? "No streak yet" : "Current streak: " + m + " min");
+        streak.setText((m == 0 ? "No streak yet" : "Current streak: " + Streak.fmt(m)) + " · " + Streak.fmt(p.getInt("dayMin", 0)) + " today");
         streak.setTextColor(0xFFFFF8E7);
         streak.setGravity(Gravity.CENTER);
         streak.setTextSize(TypedValue.COMPLEX_UNIT_SP, 22);
@@ -51,9 +51,22 @@ public class SettingsActivity extends Activity {
         });
         col.addView(enabled);
 
-        Switch quiet = toggle("Quiet mode (no streak pop-ups)", p.getBoolean("muted", false));
+        Switch quiet = toggle("Quiet mode (no pop-ups)", p.getBoolean("muted", false));
         quiet.setOnCheckedChangeListener((v, on) -> p.edit().putBoolean("muted", on).apply());
         col.addView(quiet);
+
+        Switch weather = toggle("Weather in bubble (uses your IP for location)", p.getBoolean("weather", false));
+        weather.setOnCheckedChangeListener((v, on) -> p.edit().putBoolean("weather", on).apply());
+        col.addView(weather);
+
+        int bed = p.getInt("bed", -1), bi = 0;
+        for (int i = 0; i < CatService.BED_HOURS.length; i++) if (CatService.BED_HOURS[i] == bed) bi = i;
+        TextView bedLbl = label("Bedtime: " + CatService.BED_NAMES[bi]);
+        col.addView(bedLbl);
+        col.addView(slider(CatService.BED_HOURS.length - 1, bi, v -> {
+            p.edit().putInt("bed", CatService.BED_HOURS[v]).apply();
+            bedLbl.setText("Bedtime: " + CatService.BED_NAMES[v]);
+        }));
 
         col.addView(label("Cat size"));
         col.addView(slider(CatService.MAX_DP - CatService.MIN_DP, p.getInt("size", CatService.DEFAULT_DP) - CatService.MIN_DP, v -> {
