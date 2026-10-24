@@ -9,6 +9,7 @@ import android.app.usage.UsageStatsManager;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.PixelFormat;
+import android.graphics.Typeface;
 import android.media.AudioManager;
 import android.net.ConnectivityManager;
 import android.net.Network;
@@ -17,6 +18,9 @@ import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.PowerManager;
+import android.text.SpannableString;
+import android.text.style.ForegroundColorSpan;
+import android.text.style.TabStopSpan;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.View;
@@ -45,14 +49,15 @@ public class CatService extends Service {
     static final int[] FACES = {R.drawable.cat_happy, R.drawable.cat_meh, R.drawable.cat_angry, R.drawable.cat_furious};
     static final String[] BED_NAMES = {"off", "20:00", "21:00", "22:00", "23:00", "00:00", "01:00"};
     static final int[] BED_HOURS = {-1, 20, 21, 22, 23, 0, 1};
+    static final int INK = 0xFF2B2D42, LABEL = 0x992B2D42; // card text; labels are the same ink at 60%
 
     static CatService me; // ponytail: static handle so NotifListener can reach the bubble; a bound service if this grows
 
     final Handler h = new Handler(Looper.getMainLooper());
     final Streak streak = new Streak();
     WindowManager wm;
-    LinearLayout root;
-    TextView bubble;
+    LinearLayout root, bubble;
+    TextView head, rows;
     ImageView cat;
     SharedPreferences prefs;
     String launcherPkg;
@@ -86,9 +91,9 @@ public class CatService extends Service {
             boolean watching = on && (fg == null || !fg.equals(launcherPkg));
             streak.lateHours = lateHours(now);
             tally(watching, fg);
-            if (streak.tick(watching, gap)) say(streak.label() + "\n" + status(fg), FACES[streak.mood()], SHOW_MS);
+            if (streak.tick(watching, gap)) say(streak.label(), rows(fg, false), FACES[streak.mood()], SHOW_MS);
             else if (newHour && on && hour(now) == prefs.getInt("bed", -1)) say("It's " + time(now) + ". Bedtime!", R.drawable.cat_sleepy, SHOW_MS);
-            else if (newHour && on) say(status(fg), FACES[streak.mood()], SHOW_MS); // hourly chime
+            else if (newHour && on) say(null, rows(fg, true), FACES[streak.mood()], SHOW_MS); // hourly chime
             else if (on && launcherPkg.equals(fg) && streak.idleMinutes == HOME_NUDGE_MIN) say(HOME_NUDGE_MIN + " min on the home screen. Pick something!", R.drawable.cat_meh, SHOW_MS);
             checkVolume();
             checkNet();
@@ -124,11 +129,12 @@ public class CatService extends Service {
         e.apply();
     }
 
-    /** "22:00 · 2 h today · 1 h 30 m on YouTube · 14°C clear" */
-    String status(String fg) {
-        StringBuilder s = new StringBuilder(time(lastTick)).append(" · ").append(Streak.fmt(prefs.getInt("dayMin", 0))).append(" today");
-        if (fg != null && !fg.equals(launcherPkg)) s.append(" · ").append(Streak.fmt(prefs.getInt("app:" + fg, 0))).append(" on ").append(appName(fg));
-        if (weather != null) s.append(" · ").append(weather);
+    /** Card rows as "label\tvalue" lines: Time, Today, Streak (chime only; the milestone title already says it), the app, Weather. */
+    String rows(String fg, boolean withStreak) {
+        StringBuilder s = new StringBuilder("Time\t").append(time(lastTick)).append("\nToday\t").append(Streak.fmt(prefs.getInt("dayMin", 0)));
+        if (withStreak && streak.minutes > 0) s.append("\nStreak\t").append(Streak.fmt(streak.minutes));
+        if (fg != null && !fg.equals(launcherPkg)) s.append('\n').append(appName(fg)).append('\t').append(Streak.fmt(prefs.getInt("app:" + fg, 0)));
+        if (weather != null) s.append("\nWeather\t").append(weather);
         return s.toString();
     }
 
@@ -189,23 +195,33 @@ public class CatService extends Service {
         try (InputStream in = c.getInputStream(); Scanner s = new Scanner(in, "UTF-8").useDelimiter("\\A")) { return s.next(); }
     }
 
-    /** Show the bubble with a face; showMs 0 keeps it until the next hide. Honors quiet mode. */
-    void say(String text, int face, long showMs) {
-        if (!prefs.getBoolean("muted", false)) show(text, face, showMs);
+    /** Show the card: bold title and/or "label\tvalue" rows (either may be null), with a face; showMs 0 keeps it until the next hide. Honors quiet mode. */
+    void say(String title, int face, long showMs) { say(title, null, face, showMs); }
+    void say(String title, String body, int face, long showMs) {
+        if (!prefs.getBoolean("muted", false)) show(title, body, face, showMs);
     }
 
-    /** Every pop-up once, 4 s apart: adb shell am start -n dev.hepta.tvcat/.SettingsActivity --ez demo true */
+    /** Every pop-up once, 4 s apart: adb shell am start --activity-clear-task --ez demo true -n dev.hepta.tvcat/.SettingsActivity (clear-task: a live Settings task would otherwise just come to the front and never read the extra) */
     void demo() {
-        String st = time(System.currentTimeMillis()) + " · 2 h today · 1 h 30 m on YouTube · 14°C clear";
-        String[] t = {"Yay! 30 min streak!\n" + st, "Hmm. 1 h streak.\n" + st, "2 h streak. Still watching?!\n" + st, "3 h streak!!! GO OUTSIDE.\n" + st,
-                st, "It's " + time(System.currentTimeMillis()) + ". Bedtime!", HOME_NUDGE_MIN + " min on the home screen. Pick something!",
-                "Loud! My ears!", "No internet!", "YouTube: New video — Cats vs. cucumbers"};
+        String tm = time(System.currentTimeMillis()), st = "Time\t" + tm + "\nToday\t2 h\nYouTube\t1 h 30 m\nWeather\t14°C clear";
+        String[] t = {"Yay! 30 min streak!", "Hmm. 1 h streak.", "2 h streak. Still watching?!", "3 h streak!!! GO OUTSIDE.",
+                null, "It's " + tm + ". Bedtime!", HOME_NUDGE_MIN + " min on the home screen. Pick something!",
+                "Loud! My ears!", "No internet!", "YouTube"};
+        String[] b = {st, st, st, st, st.replace("\nYouTube", "\nStreak\t45 min\nYouTube"), null, null, null, null, "New video — Cats vs. cucumbers"};
         int[] f = {FACES[0], FACES[1], FACES[2], FACES[3], FACES[0], R.drawable.cat_sleepy, R.drawable.cat_meh, R.drawable.cat_ears, R.drawable.cat_meh, R.drawable.cat};
-        for (int i = 0; i < t.length; i++) { final int k = i; h.postDelayed(() -> show(t[k], f[k], 3_500), i * 4_000L); }
+        for (int i = 0; i < t.length; i++) { final int k = i; h.postDelayed(() -> show(t[k], b[k], f[k], 3_500), i * 4_000L); }
     }
 
-    void show(String text, int face, long showMs) {
-        bubble.setText(text);
+    void show(String title, String body, int face, long showMs) {
+        head.setText(title);
+        head.setVisibility(title == null ? View.GONE : View.VISIBLE);
+        if (body != null) {
+            SpannableString s = new SpannableString(body);
+            s.setSpan(new TabStopSpan.Standard(dp(96)), 0, s.length(), 0); // ponytail: one column stop; a label wider than 96dp (long app name) pushes only its own value right
+            for (int t = body.indexOf('\t'); t >= 0; t = body.indexOf('\t', t + 1)) s.setSpan(new ForegroundColorSpan(LABEL), body.lastIndexOf('\n', t) + 1, t, 0);
+            rows.setText(s);
+        }
+        rows.setVisibility(body == null ? View.GONE : View.VISIBLE);
         bubble.setVisibility(View.VISIBLE);
         cat.setImageResource(face);
         cat.animate().scaleX(1.5f).scaleY(1.5f).setDuration(300).withEndAction(() ->
@@ -226,6 +242,7 @@ public class CatService extends Service {
         WindowManager.LayoutParams lp = (WindowManager.LayoutParams) root.getLayoutParams();
         lp.gravity = g;
         wm.updateViewLayout(root, lp);
+        root.setGravity(g & Gravity.VERTICAL_GRAVITY_MASK); // card grows away from the screen edge; the cat stays put
     }
 
     // field, not a local: SharedPreferences keeps listeners weakly
@@ -240,15 +257,21 @@ public class CatService extends Service {
         wm = getSystemService(WindowManager.class);
         root = new LinearLayout(this);
         root.setOrientation(LinearLayout.HORIZONTAL);
-        root.setGravity(Gravity.CENTER_VERTICAL);
 
-        bubble = new TextView(this);
+        bubble = new LinearLayout(this);
+        bubble.setOrientation(LinearLayout.VERTICAL);
+        bubble.setLayoutDirection(View.LAYOUT_DIRECTION_LTR); // the card's contents never flip with the root
         bubble.setBackgroundResource(R.drawable.bubble);
-        bubble.setTextColor(0xFF2B2D42);
-        bubble.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
-        bubble.setPadding(dp(14), dp(8), dp(14), dp(8));
-        bubble.setMaxWidth(dp(400));
+        bubble.setPadding(dp(14), dp(10), dp(14), dp(10));
         bubble.setVisibility(View.GONE);
+        head = new TextView(this);
+        head.setTypeface(Typeface.DEFAULT_BOLD);
+        head.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
+        head.setPadding(0, 0, 0, dp(3));
+        rows = new TextView(this);
+        rows.setTextSize(TypedValue.COMPLEX_UNIT_SP, 14);
+        rows.setLineSpacing(dp(2), 1f);
+        for (TextView t : new TextView[]{head, rows}) { t.setTextColor(INK); t.setMaxWidth(dp(400)); bubble.addView(t); }
         LinearLayout.LayoutParams bp = new LinearLayout.LayoutParams(-2, -2);
         bp.setMarginEnd(dp(8));
         root.addView(bubble, bp);

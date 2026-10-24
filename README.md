@@ -13,7 +13,7 @@ A tiny cat that sits in the corner of your Android TV and pops out a speech bubb
 - The streak survives restarts (saved every minute).
 - The cat's face depends on the streak: happy under 1 h, unimpressed at 1 h, angry at 2 h, furious from 3 h.
 - Every pop-up also shows the time, today's total, and time spent in the current app ("22:00 · 2 h today · 1 h 30 m on YouTube").
-- Hourly chime: the cat pops the same status line at the top of every hour.
+- Hourly chime: at the top of every hour the cat shows a small card: time, today's total, current streak, time in the current app (and weather, if on).
 - Bedtime (optional): the cat yawns at the set hour and gets one mood grumpier for every hour past it.
 - Nudges: 5 minutes on the home screen, volume above 80 % (50 % past bedtime), and a sticky "No internet!" while offline.
 - Weather (opt-in): current temperature and sky in the bubble. Uses your public IP for location via geojs.io and open-meteo.com; off by default.

@@ -13,7 +13,7 @@ public class NotifListener extends NotificationListenerService {
         Bundle x = sbn.getNotification().extras;
         CharSequence title = x.getCharSequence(Notification.EXTRA_TITLE), text = x.getCharSequence(Notification.EXTRA_TEXT);
         if (title == null && text == null) return;
-        String msg = svc.appName(sbn.getPackageName()) + ": " + (title == null ? "" : title) + (title != null && text != null ? " — " : "") + (text == null ? "" : text);
-        svc.h.post(() -> svc.say(msg, R.drawable.cat, CatService.SHOW_MS));
+        String msg = (title == null ? "" : title) + (title != null && text != null ? " — " : "") + (text == null ? "" : text);
+        svc.h.post(() -> svc.say(svc.appName(sbn.getPackageName()), msg, R.drawable.cat, CatService.SHOW_MS));
     }
 }
