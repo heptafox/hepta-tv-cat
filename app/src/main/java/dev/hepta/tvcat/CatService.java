@@ -11,6 +11,7 @@ import android.content.SharedPreferences;
 import android.graphics.PixelFormat;
 import android.media.AudioManager;
 import android.net.ConnectivityManager;
+import android.net.Network;
 import android.net.NetworkCapabilities;
 import android.os.Handler;
 import android.os.IBinder;
@@ -157,10 +158,13 @@ public class CatService extends Service {
 
     void checkNet() {
         ConnectivityManager cm = getSystemService(ConnectivityManager.class);
-        NetworkCapabilities nc = cm.getNetworkCapabilities(cm.getActiveNetwork());
+        Network net = cm.getActiveNetwork();
+        NetworkCapabilities nc = cm.getNetworkCapabilities(net);
         boolean off = nc == null || !nc.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED);
         if (off) say("No internet!", R.drawable.cat_meh, 0); // sticky until back online
         else if (offline) hide.run();
+        // ponytail: Android re-probes an unvalidated network with backoff up to 10 min; asking it to re-check every tick clears the bubble within a minute of being back online
+        if (off && net != null) cm.reportNetworkConnectivity(net, true);
         offline = off;
     }
 
