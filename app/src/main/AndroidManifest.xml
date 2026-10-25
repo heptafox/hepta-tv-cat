@@ -11,7 +11,7 @@
     <uses-feature android:name="android.hardware.touchscreen" android:required="false"/>
 
     <application android:hardwareAccelerated="false" android:label="TV Cat" android:icon="@drawable/cat" android:banner="@drawable/banner" android:theme="@android:style/Theme.Material.NoActionBar">
-        <activity android:name=".SettingsActivity" android:exported="true">
+        <activity android:name=".SettingsActivity" android:exported="true" android:theme="@android:style/Theme.Material.Dialog.NoActionBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LEANBACK_LAUNCHER"/>

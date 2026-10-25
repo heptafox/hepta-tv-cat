@@ -6,7 +6,7 @@ A tiny cat that sits in the corner of your Android TV and pops out a speech bubb
 
 **Open source** under the [Apache License 2.0](LICENSE). Pure Java, no dependencies, one foreground service. Issues and pull requests are welcome.
 
-<p align="center"><img src="docs/img/app-settings.png" width="640" alt="TV Cat settings screen"></p>
+<p align="center"><img src="docs/img/app-settings.png" width="480" alt="TV Cat settings screen"></p>
 
 - **Watching** = screen on and the foreground app is not the launcher.
 - **Idle** = screen off or sitting on the home screen. 10 idle minutes (or TV standby) resets the streak.
@@ -18,7 +18,7 @@ A tiny cat that sits in the corner of your Android TV and pops out a speech bubb
 - Nudges: 5 minutes on the home screen, volume above 80 % (50 % past bedtime), and a sticky "No internet!" while offline.
 - Weather (opt-in): current temperature and sky in the bubble. Uses your public IP for location via geojs.io and open-meteo.com; off by default.
 - TV notifications in the bubble (optional): needs one extra adb command, see step 7.
-- Settings (click the app icon): show/hide cat, quiet mode (no pop-ups), weather, bedtime, cat size, transparency, corner position.
+- Settings (click the app icon): a small card over the home screen. Every option works the same way: move to it, press left/right on the remote. Show cat, pop-ups, weather, bedtime, size, transparency, corner. Size, transparency and corner change the real cat live.
 
 ## Install (no Android Studio, no SDK)
 
